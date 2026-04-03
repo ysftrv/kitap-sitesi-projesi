@@ -1,0 +1,252 @@
+Bana bir kitap sitesi projesi yap. Üniversite ödevi için yapıyorum, backend + frontend + veritabanı olacak.
+
+Teknolojiler:
+- Backend: Python Flask
+- Frontend: React (Vite)
+- Veritabanı: MySQL
+- CSS: Tailwind CSS
+
+==========================================================
+BACKEND
+==========================================================
+
+backend/ klasörüne yap.
+
+Flask ile REST API oluştur. Yapı basit olsun:
+
+backend/
+├── app.py
+├── config.py
+├── models.py        (tek dosyada tüm modeller)
+├── routes/
+│   ├── auth.py
+│   ├── books.py
+│   └── reviews.py
+├── seed.py
+├── requirements.txt
+└── .env
+
+### Veritabanı Tabloları (models.py içinde hepsi):
+
+User:
+- id, username, email, password_hash, created_at
+
+Book:
+- id, title, author, description, isbn, cover_image_url, page_count, published_year, created_at
+
+Category:
+- id, name
+
+book_category: (ara tablo, many-to-many)
+- book_id, category_id
+
+Review:
+- id, user_id, book_id, rating (1-5), comment, created_at
+
+SQLAlchemy kullan. İlişkileri tanımla.
+
+### API Endpointleri:
+
+Auth:
+- POST /api/auth/register → kayıt ol
+- POST /api/auth/login → giriş yap, JWT token döndür
+- GET /api/auth/me → token ile kullanıcı bilgisi al
+
+Kitaplar:
+- GET /api/books → kitapları listele (sayfalama: ?page=1&per_page=10)
+- GET /api/books/<id> → kitap detayı (yorumlarıyla beraber)
+- POST /api/books → kitap ekle (giriş gerekli)
+- PUT /api/books/<id> → kitap güncelle (giriş gerekli)
+- DELETE /api/books/<id> → kitap sil (giriş gerekli)
+- GET /api/books/search?q=kelime → kitap ara (title ve author'da arasın)
+- GET /api/books?category=id → kategoriye göre filtrele
+
+Yorumlar:
+- GET /api/books/<id>/reviews → yorumları getir
+- POST /api/books/<id>/reviews → yorum yaz (giriş gerekli)
+
+Kategoriler:
+- GET /api/categories → kategorileri listele
+
+### config.py
+- .env dosyasından oku
+- python-dotenv kullan
+
+### .env
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=1234
+MYSQL_DB=booksite_db
+JWT_SECRET_KEY=gizli-anahtar-123
+
+### seed.py
+Çalıştırınca şunları eklesin:
+- 2 kullanıcı (test1 / test123, test2 / test123)
+- 5 kategori: Roman, Bilim Kurgu, Tarih, Felsefe, Bilgisayar
+- 8 kitap (Türkçe kitap isimleri kullan, mesela: Suç ve Ceza, 1984, Simyacı, Şeker Portakalı, Tutunamayanlar, Fareler ve İnsanlar, Dune, Python Programlama gibi)
+- Her kitaba 1-2 kategori ata
+- 8-10 tane yorum (farklı kullanıcılardan)
+
+### requirements.txt
+Flask, Flask-CORS, Flask-JWT-Extended, Flask-SQLAlchemy, PyMySQL,
+python-dotenv, bcrypt, gunicorn
+
+### Genel kurallar:
+- CORS aktif olsun (tüm originler, development için)
+- Her endpoint JSON dönsün
+- Hata durumlarında düzgün mesaj ve status code dönsün (400, 401, 404, 500)
+- Şifreleri hashleyerek sakla
+- JWT token süresi 1 gün olsun
+
+==========================================================
+FRONTEND
+==========================================================
+
+frontend/ klasörüne yap. Vite ile React projesi oluştur.
+
+frontend/src/
+├── components/
+│   ├── Navbar.jsx
+│   ├── BookCard.jsx
+│   └── ProtectedRoute.jsx
+├── pages/
+│   ├── Home.jsx
+│   ├── Books.jsx
+│   ├── BookDetail.jsx
+│   ├── Login.jsx
+│   ├── Register.jsx
+│   └── AddBook.jsx
+├── context/
+│   └── AuthContext.jsx
+├── api.js
+├── App.jsx
+└── main.jsx
+
+### api.js
+- Axios instance oluştur
+- baseURL: http://localhost:5000/api
+- Request interceptor: localStorage'dan token varsa header'a ekle
+
+### AuthContext.jsx
+- login, logout, user state'leri
+- Token'ı localStorage'da tut
+- Sayfa yenilenince token'dan kullanıcıyı çek
+
+### Sayfalar:
+
+Home.jsx:
+- Basit bir karşılama bölümü, "Kitap Dünyası" başlığı
+- Son eklenen 4 kitap (BookCard ile göster)
+- Kategoriler listesi (tıklanınca Books sayfasına filtreli gitsin)
+
+Books.jsx:
+- Tüm kitaplar grid halinde (BookCard)
+- Üstte bir arama kutusu
+- Kategori filtresi (dropdown veya butonlar)
+- Basit sayfalama (Önceki / Sonraki butonları)
+
+BookDetail.jsx:
+- Kitap bilgileri (başlık, yazar, açıklama, sayfa sayısı, yıl, isbn)
+- Kapak görseli (yoksa basit bir placeholder div)
+- Kategorileri göster
+- Ortalama puan
+- Yorumlar listesi
+- Giriş yapılmışsa: yorum ekleme formu (rating seçimi + yorum yazma)
+
+Login.jsx:
+- Email ve şifre
+- Giriş butonu
+- Hata mesajı göster
+- "Hesabın yok mu? Kayıt ol" linki
+
+Register.jsx:
+- Username, email, şifre alanları
+- Kayıt butonu
+- Başarılıysa login sayfasına yönlendir
+
+AddBook.jsx: (sadece giriş yapanlar görsün)
+- Kitap ekleme formu (title, author, description, isbn, cover_image_url, page_count, published_year)
+- Kategori seçimi (checkbox)
+- Ekleyince kitaplar sayfasına yönlendir
+
+Navbar.jsx:
+- Sol: "Kitap Sitesi" yazısı (ana sayfaya link)
+- Orta: Kitaplar linki
+- Sağ: giriş yapılmamışsa Giriş/Kayıt, yapılmışsa kullanıcı adı + Kitap Ekle + Çıkış
+
+BookCard.jsx:
+- Kitap adı, yazar, kısa açıklama (max 80 karakter)
+- Puan (varsa yıldız sayısı)
+- Tıklanınca detay sayfasına gitsin
+
+ProtectedRoute.jsx:
+- Giriş yapılmamışsa login sayfasına yönlendirsin
+
+### Tasarım:
+- Tailwind CSS kullan
+- Basit ve temiz bir tasarım, aşırı süslü olmasın
+- Beyaz arka plan, koyu gri yazılar, mavi tonlarında butonlar
+- Responsive olsun (mobilde tek sütun, masaüstünde 3-4 sütun grid)
+- Loading durumlarında "Yükleniyor..." yazısı göster
+- Hata durumlarında kırmızı mesaj göster
+
+==========================================================
+AWS DEPLOY KILAVUZU
+==========================================================
+
+aws-deploy.md dosyası oluştur. İçinde şunlar olsun:
+
+1. AWS RDS ile MySQL veritabanı oluşturma adımları
+   - Free tier ayarları
+   - Security group ayarları
+
+2. AWS EC2 ile backend deploy
+   - Ubuntu sunucu kurulumu
+   - Python ve bağımlılıkları kurma
+   - Gunicorn ile Flask çalıştırma
+   - .env ayarları (RDS bağlantısı)
+
+3. AWS S3 ile frontend deploy
+   - React build alma
+   - S3 bucket'a yükleme
+   - Static website hosting açma
+
+4. Güvenlik notları
+   - .env'yi git'e yüklememe
+   - HTTPS kullanma
+   - Production'da CORS kısıtlama
+
+Adımları Türkçe yaz, basit ve anlaşılır olsun.
+Terminal komutlarını da ekle.
+
+==========================================================
+README.md
+==========================================================
+
+Türkçe bir README.md oluştur:
+- Proje hakkında kısa açıklama
+- Kullanılan teknolojiler
+- Kurulum adımları (backend ve frontend ayrı ayrı)
+- .env dosyası açıklaması
+- API endpointleri tablosu
+- Ekran görüntüsü alanı (boş bırak)
+
+==========================================================
+SON NOTLAR
+==========================================================
+
+- Tüm dosyaları eksiksiz oluştur, hiçbirini boş bırakma
+- Her dosyada Türkçe yorum satırları ekle
+- Kodlar çalışır durumda olsun
+- Basit ve anlaşılır kod yaz, gereksiz karmaşık yapma
+- Aşırı profesyonel framework pattern'ları kullanma, sade tut
+- Her dosyayı oluşturduktan sonra bir sonrakine geç
+
+Tüm dosyaları oluşturduktan sonra en sona şunu yazdır:
+
+"Proje hazır! Çalıştırmak için:
+1. MySQL'de veritabanı oluştur: CREATE DATABASE booksite_db;
+2. cd backend && pip install -r requirements.txt && python app.py
+3. python seed.py
+4. Yeni terminal: cd frontend && npm install && npm run dev
+5. Tarayıcıda http://localhost:5173 adresine git"
