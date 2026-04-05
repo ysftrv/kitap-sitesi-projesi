@@ -1,152 +1,133 @@
-# Kitap Sitesi
+# Kitap Sitesi Projesi
 
-Kitap arama, listeleme ve yorum yapma özelliklerine sahip full-stack bir web uygulaması. Üniversite ödevi olarak geliştirilmiştir.
-
----
+Bu proje üniversite dersi için yapılmış bir kitap sitesidir. Kullanıcılar kitapları görüntüleyebilir, arama yapabilir, yorum bırakabilir ve yeni kitap ekleyebilir.
 
 ## Kullanılan Teknolojiler
 
-| Katman | Teknoloji |
-|--------|-----------|
-| Backend | Python, Flask, Flask-JWT-Extended, Flask-SQLAlchemy |
-| Frontend | React 18, Vite, React Router v6 |
-| Veritabanı | MySQL 8 |
-| CSS | Tailwind CSS |
-| HTTP İstekleri | Axios |
-| Şifreleme | bcrypt |
-| Sunucu | Gunicorn |
+- **Backend:** Python Flask
+- **Frontend:** React (Vite ile oluşturuldu)
+- **Veritabanı:** MySQL
+- **CSS:** Tailwind CSS
+- **Auth:** JWT token
+- **Deploy:** AWS (EC2, RDS, S3)
 
----
+## Proje Yapısı
+
+Proje iki katmanlı olarak tasarlandı:
+
+- `backend/` → Flask ile yazılmış REST API
+- `frontend/` → React ile yazılmış kullanıcı arayüzü
+
+Backend ve frontend birbirinden bağımsız çalışıyor. Frontend, backend API'ye axios ile istek atıyor.
+
+## Özellikler
+
+- Kullanıcı kayıt ve giriş sistemi (JWT ile)
+- Kitap listeleme, ekleme, güncelleme, silme
+- Kitap arama (başlık ve yazara göre)
+- Kategoriye göre filtreleme
+- Kitaplara yorum ve puan verme
+- Sayfalama (pagination)
+- Responsive tasarım (mobil uyumlu)
 
 ## Kurulum
 
 ### Gereksinimler
-
 - Python 3.10+
 - Node.js 18+
-- MySQL 8.0+
+- MySQL
 
-### 1. Veritabanı Oluşturma
-
-MySQL'e bağlan ve veritabanını oluştur:
-
-```sql
-CREATE DATABASE booksite_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 2. Backend Kurulumu
+### Backend Kurulumu
 
 ```bash
 cd backend
-
-# Sanal ortam oluştur (isteğe bağlı ama önerilir)
-python -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
-
-# Bağımlılıkları kur
 pip install -r requirements.txt
+```
 
-# .env dosyasını düzenle (kendi MySQL bilgilerini gir)
-# Varsayılan: host=localhost, user=root, password=1234
+`.env` dosyası oluşturun:
 
-# Uygulamayı başlat (tablolar otomatik oluşur)
+```
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=sifreniz
+MYSQL_DB=booksite_db
+JWT_SECRET_KEY=gizli-anahtar-123
+```
+
+MySQL'de veritabanı oluşturun:
+
+```sql
+CREATE DATABASE booksite_db;
+```
+
+Uygulamayı başlatın:
+
+```bash
 python app.py
 ```
 
-Backend `http://localhost:5000` adresinde çalışır.
-
-#### Örnek Verileri Yükle (isteğe bağlı)
+Örnek verileri yükleyin:
 
 ```bash
 python seed.py
 ```
 
-2 kullanıcı, 5 kategori, 8 kitap ve 10 yorum eklenir.
+Backend http://localhost:5000 adresinde çalışır.
 
-### 3. Frontend Kurulumu
+### Frontend Kurulumu
 
 ```bash
 cd frontend
-
-# Bağımlılıkları kur
 npm install
-
-# Geliştirme sunucusunu başlat
 npm run dev
 ```
 
-Frontend `http://localhost:5173` adresinde çalışır.
-
----
-
-## .env Dosyası
-
-`backend/.env` dosyası aşağıdaki değişkenleri içerir:
-
-| Değişken | Açıklama | Varsayılan |
-|----------|----------|------------|
-| `MYSQL_HOST` | MySQL sunucu adresi | `localhost` |
-| `MYSQL_USER` | MySQL kullanıcı adı | `root` |
-| `MYSQL_PASSWORD` | MySQL şifresi | `1234` |
-| `MYSQL_DB` | Veritabanı adı | `booksite_db` |
-| `JWT_SECRET_KEY` | JWT imzalama anahtarı | `gizli-anahtar-123` |
-
-> **Not:** Production ortamında `JWT_SECRET_KEY` değerini uzun ve rastgele bir string ile değiştir.
-
----
+Frontend http://localhost:5173 adresinde çalışır.
 
 ## API Endpointleri
 
 ### Auth
-
-| Method | Endpoint | Açıklama | Auth |
-|--------|----------|----------|------|
-| POST | `/api/auth/register` | Yeni kullanıcı kaydı | Hayır |
-| POST | `/api/auth/login` | Giriş, JWT token döner | Hayır |
-| GET | `/api/auth/me` | Oturum açmış kullanıcı bilgisi | Evet |
+| Method | Endpoint | Açıklama |
+|--------|----------|----------|
+| POST | /api/auth/register | Kayıt ol |
+| POST | /api/auth/login | Giriş yap |
+| GET | /api/auth/me | Kullanıcı bilgisi |
 
 ### Kitaplar
-
-| Method | Endpoint | Açıklama | Auth |
-|--------|----------|----------|------|
-| GET | `/api/books` | Kitap listesi (sayfalama: `?page=1&per_page=10`) | Hayır |
-| GET | `/api/books?category=<id>` | Kategoriye göre filtrele | Hayır |
-| GET | `/api/books/search?q=<kelime>` | Başlık veya yazarda ara | Hayır |
-| GET | `/api/books/<id>` | Kitap detayı (yorumlarıyla) | Hayır |
-| POST | `/api/books` | Yeni kitap ekle | Evet |
-| PUT | `/api/books/<id>` | Kitap güncelle | Evet |
-| DELETE | `/api/books/<id>` | Kitap sil | Evet |
+| Method | Endpoint | Açıklama |
+|--------|----------|----------|
+| GET | /api/books | Kitapları listele |
+| GET | /api/books/:id | Kitap detayı |
+| POST | /api/books | Kitap ekle |
+| PUT | /api/books/:id | Kitap güncelle |
+| DELETE | /api/books/:id | Kitap sil |
+| GET | /api/books/search?q= | Kitap ara |
 
 ### Yorumlar
-
-| Method | Endpoint | Açıklama | Auth |
-|--------|----------|----------|------|
-| GET | `/api/books/<id>/reviews` | Kitabın yorumlarını getir | Hayır |
-| POST | `/api/books/<id>/reviews` | Yorum ekle | Evet |
+| Method | Endpoint | Açıklama |
+|--------|----------|----------|
+| GET | /api/books/:id/reviews | Yorumları getir |
+| POST | /api/books/:id/reviews | Yorum ekle |
 
 ### Kategoriler
-
-| Method | Endpoint | Açıklama | Auth |
-|--------|----------|----------|------|
-| GET | `/api/categories` | Tüm kategorileri listele | Hayır |
-
----
-
-## Test Kullanıcıları (seed.py sonrası)
-
-| Kullanıcı Adı | Email | Şifre |
-|--------------|-------|-------|
-| test1 | test1@example.com | test123 |
-| test2 | test2@example.com | test123 |
-
----
-
-## Ekran Görüntüleri
-
-> *(Ekran görüntüleri buraya eklenecek)*
-
----
+| Method | Endpoint | Açıklama |
+|--------|----------|----------|
+| GET | /api/categories | Kategorileri listele |
 
 ## AWS Deploy
 
-AWS üzerinde yayına almak için [`aws-deploy.md`](aws-deploy.md) dosyasına bak.
+Proje AWS üzerinde yayınlandı:
+- **Veritabanı:** AWS RDS (MySQL)
+- **Backend:** AWS EC2 (Gunicorn ile çalışıyor)
+- **Frontend:** AWS S3 (Static Website Hosting)
+
+## Test Kullanıcıları
+
+| Kullanıcı | Email | Şifre |
+|-----------|-------|-------|
+| test1 | test1@test.com | test123 |
+| test2 | test2@test.com | test123 |
+
+## Ekran Görüntüleri
+
+(sunum videosunda gösterilmiştir)
